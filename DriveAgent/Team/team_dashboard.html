@@ -1,0 +1,614 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>הצוות שלי</title>
+<style>
+  :root { --bg:#0f1215; --surface:#171b20; --card:#1b2026; --line:#2c333b; --text:#e8eaed; --muted:#98a1ab; --accent:#8aa9c7; --ok:#6fae8b; --warn:#c9a45c; --bad:#d4726f; }
+  * { box-sizing: border-box; }
+  html { font-size: 15px; }
+  @media (min-width: 1400px) { html { font-size: 18px; } }   /* TV / DeX */
+  html, body { max-width: 100%; overflow-x: hidden; }
+  main, .panel, .grid2 > div { min-width: 0; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 1rem/1.45 system-ui, "Segoe UI", Arial, sans-serif; }
+  button, input, select, textarea { font: inherit; }
+  header { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 14px 16px 6px; }
+  header .ttl { flex: 1 1 200px; min-width: 0; }
+  h1 { margin: 0; font-size: 1.3rem; font-weight: 600; color: var(--text); }
+  .sub { color: var(--muted); font-size: .8rem; }
+  .btn { border: 0; border-radius: 6px; padding: 8px 14px; font-weight: 600; cursor: pointer; color: #10151a; background: var(--accent); }
+  .btn.g { background: var(--accent); } .btn.p { background: var(--accent); } .btn.a { background: var(--accent); }
+  .btn.ghost { background: var(--surface); color: var(--text); border: 1px solid var(--line); font-weight: 500; }
+  .btn.danger { background: transparent; color: var(--bad); border: 1px solid var(--bad); }
+  .btn.sm { padding: 4px 10px; font-size: .8rem; }
+  nav { display: flex; gap: 8px; padding: 8px 16px; overflow-x: auto; position: sticky; top: 0; background: var(--bg); z-index: 3; border-bottom: 1px solid var(--line); }
+  .chip { flex: none; border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 6px; padding: 7px 14px; cursor: pointer; white-space: nowrap; }
+  .chip.on { background: var(--accent); color: #10151a; border-color: var(--accent); font-weight: 600; }
+  main { padding: 12px 16px 40px; }
+  .grid2 { display: grid; gap: 14px; }
+  @media (min-width: 1000px) { .grid2 { grid-template-columns: 3fr 2fr; align-items: start; } }
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
+  .kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px; text-align: center; }
+  .kpi b { display: block; font-size: 1.6rem; }
+  .kpi span { color: var(--muted); font-size: .75rem; }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 12px; margin-bottom: 14px; }
+  .panel h2 { margin: 0 0 8px; font-size: 1.05rem; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .panel h2 small { color: var(--muted); font-weight: 400; font-size: .8rem; }
+  .scroll { overflow-x: auto; }
+  table.sched { border-collapse: separate; border-spacing: 4px; width: 100%; min-width: 560px; }
+  .sched th { color: var(--muted); font-weight: 500; font-size: .8rem; padding: 4px; }
+  .sched th.today { color: var(--accent); }
+  .sched td { background: var(--surface); border-radius: 10px; padding: 7px 4px; text-align: center; font-size: .85rem; }
+  .sched td.name { text-align: right; font-weight: 600; background: transparent; cursor: pointer; white-space: nowrap; color: var(--text); }
+  .sched td.today { outline: 2px solid var(--accent); }
+  .sched td.off { color: var(--muted); background: transparent; border: 1px dashed var(--line); }
+  .sched td.work { color: var(--ok); }
+  .task { display: grid; grid-template-columns: 28px 1fr auto; gap: 8px; padding: 8px 0; border-top: 1px solid var(--line); align-items: start; }
+  .task:first-child { border-top: 0; }
+  .task input[type=checkbox] { width: 22px; height: 22px; accent-color: var(--ok); margin-top: 2px; }
+  .task .t { font-weight: 600; }
+  .task.done .t { text-decoration: line-through; color: var(--muted); }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+  .tag { font-size: .72rem; border-radius: 6px; padding: 2px 9px; background: var(--surface); border: 1px solid var(--line); color: var(--muted); }
+  .tag.loc { color: var(--accent); } .tag.rec { color: var(--accent); } .tag.daily { color: var(--accent); }
+  .tag.weekly { color: var(--warn); } .tag.late { color: var(--bad); border-color: var(--bad); }
+  .details { font-size: .82rem; background: var(--surface); border-radius: 10px; padding: 6px 9px; margin-top: 6px; white-space: pre-wrap; }
+  .why { font-size: .75rem; color: var(--muted); margin-top: 3px; }
+  .who { font-weight: 600; color: var(--accent); margin: 10px 0 2px; cursor: pointer; }
+  .muted { color: var(--muted); font-size: .85rem; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .avatar { width: 52px; height: 52px; border-radius: 50%; background: var(--line); display: grid; place-items: center; font-weight: 600; font-size: 1.3rem; color: var(--text); }
+  .card-head .info { flex: 1 1 180px; }
+  .card-head h2 { margin: 0; font-size: 1.3rem; }
+  a.tel { color: var(--ok); text-decoration: none; }
+  .rec-item { display: flex; gap: 8px; align-items: start; padding: 6px 0; border-top: 1px solid var(--line); }
+  .rec-item:first-child { border-top: 0; }
+  .badge { font-size: .72rem; border-radius: 8px; padding: 2px 8px; flex: none; }
+  .badge.bonus { background: #3a2f0b; color: var(--warn); } .badge.upgrade { background: #0e2f24; color: var(--ok); } .badge.note { background: #1f262e; color: var(--accent); }
+  .review p { margin: 4px 0; }
+  .review ul { margin: 4px 0; padding-inline-start: 20px; }
+  .review h3 { margin: 10px 0 2px; font-size: .9rem; color: var(--muted); }
+  .reco { background: #1f262e; border: 1px solid var(--accent); border-radius: 8px; padding: 8px 10px; margin-top: 8px; }
+  .progress { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; margin: 6px 0; }
+  .progress i { display: block; height: 100%; background: var(--ok); }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .empty { color: var(--muted); text-align: center; padding: 28px 10px; }
+  /* Dialog */
+  .modal { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: none; align-items: center; justify-content: center; z-index: 10; padding: 10px; }
+  .modal.on { display: flex; }
+  @media (min-width: 700px) { .modal { align-items: center; } }
+  .sheet { background: var(--card); border: 1px solid var(--line); border-radius: 10px 10px 0 0; width: 100%; max-width: 620px; max-height: 100%; overflow-y: auto; padding: 16px; }
+  @media (min-width: 700px) { .sheet { border-radius: 8px; } }
+  .sheet h2 { margin: 0 0 10px; color: var(--accent); font-size: 1.1rem; }
+  label { display: block; color: var(--muted); font-size: .8rem; margin: 8px 0 3px; }
+  .f { width: 100%; border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 8px; padding: 9px 11px; }
+  textarea.f { min-height: 70px; resize: vertical; }
+  .days { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+  @media (min-width: 560px) { .days { grid-template-columns: repeat(4, 1fr); } }
+  .actions { display: flex; gap: 8px; justify-content: flex-start; margin-top: 14px; flex-wrap: wrap; }
+  .choice { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .who-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+  .pick { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 16px 8px; border-radius: 8px; cursor: pointer;
+    background: var(--surface); border: 1px solid var(--accent); color: var(--text); }
+  .pick.all { background: var(--surface); border-color: var(--accent); }
+  .pick .big { font-size: 2.2rem; }
+  .pick small { color: var(--muted); font-size: .72rem; text-align: center; }
+  .avatar.sm { width: 38px; height: 38px; font-size: 1rem; }
+  .toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--surface); border: 1px solid var(--accent); color: var(--text); padding: 8px 16px; border-radius: 6px; display: none; z-index: 20; }
+  .ico:empty, .big:empty { display: none; }
+</style>
+</head>
+<body>
+<header>
+  <div class="ttl"><h1 id="title">הצוות שלי</h1><div class="sub" id="sub"></div></div>
+  <button class="btn g edit" onclick="openEmployee()">+ עובד</button>
+  <button class="btn p edit" onclick="openTask()">+ משימה</button>
+  <button class="btn a edit" onclick="openPortal()">שלח סידור לעובדים</button>
+  <button class="btn ghost edit" onclick="importChat()">⬆ ייבוא מוואטסאפ</button>
+  <button class="btn ghost edit" onclick="exportExcel()">⬇ אקסל</button>
+</header>
+<nav id="nav"></nav>
+<main id="main"></main>
+
+<div class="modal" id="modal" onclick="if (event.target === this) closeModal()"><div class="sheet" id="sheet"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+  var BOARD = /*BOARD_DATA*/null;
+  var inApp = !!(window.AgentBoard && AgentBoard.board);
+  var view = 'main';
+  var taskFilter = 'open';
+  var DAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+  var DAY_NAMES = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+  var KIND = { once: 'חד-פעמית', daily: 'יומית', weekly: 'שבועית' };
+  var REC = { bonus: 'בונוס', upgrade: 'שדרוג', note: 'הערה', suggestion: 'הצעה' };
+
+  function B() { return BOARD || { group: '', employees: [], tasks: [] }; }
+  function esc(s) { var d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
+  function attr(s) { return esc(s).replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+  function pad(n) { return String(n).padStart(2, '0'); }
+  function key(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function today() { return key(new Date()); }
+  function weekStart() { var d = new Date(); d.setDate(d.getDate() - d.getDay()); return key(d); }
+  function weekDates() { var d = new Date(); d.setDate(d.getDate() - d.getDay()); var a = []; for (var i = 0; i < 7; i++) { a.push(new Date(d)); d.setDate(d.getDate() + 1); } return a; }
+  function emp(name) { return B().employees.filter(function (e) { return e.name === name; })[0]; }
+  function isDone(t) {
+    if (t.kind === 'daily') return (t.doneOn || []).indexOf(today()) >= 0;
+    if (t.kind === 'weekly') return (t.doneOn || []).indexOf(weekStart()) >= 0;
+    return t.status === 'done';
+  }
+  function isLate(t) { return t.kind === 'once' && !isDone(t) && t.date && t.date < today(); }
+  function todaysTasks(t) {
+    if (t.kind === 'daily') return true;
+    if (t.kind === 'weekly') return !isDone(t);
+    return t.date === today() || isLate(t);
+  }
+  function call(fn) {
+    if (!inApp) return;
+    try { var r = fn(); if (r) BOARD = JSON.parse(r); } catch (e) { toast('שגיאה בשמירה'); }
+    render();
+  }
+  window.reloadBoard = function () { if (inApp) { try { BOARD = JSON.parse(AgentBoard.board()); } catch (e) {} } render(); };
+  function toast(msg) { var t = document.getElementById('toast'); t.textContent = msg; t.style.display = 'block'; clearTimeout(t._h); t._h = setTimeout(function () { t.style.display = 'none'; }, 2500); }
+  function go(v) { view = v; render(); window.scrollTo(0, 0); }
+  var _toasted = {};
+  function toastOnce(msg) { if (_toasted[msg]) return; _toasted[msg] = 1; toast(msg); setTimeout(function () { delete _toasted[msg]; }, 20000); }
+  /** Picks an exported WhatsApp chat (.zip or .txt) on the phone; the app reads it with Claude. */
+  function importChat() { if (inApp && AgentBoard.importChat) AgentBoard.importChat(); }
+
+  // ---- Rendering ----
+  function render() {
+    var b = B();
+    document.getElementById('title').textContent = 'הצוות שלי' + (b.group ? ' — ' + b.group : '');
+    document.getElementById('sub').textContent = new Date().toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long' });
+    Array.prototype.forEach.call(document.querySelectorAll('.edit'), function (x) { x.style.display = inApp ? '' : 'none'; });
+    if (view.indexOf('emp:') === 0 && !emp(view.slice(4))) view = 'main';
+    var hasReports = inApp && !!AgentBoard.reports;
+    if (view === 'reports' && !hasReports) view = 'main';
+    if (inApp && AgentBoard.importing && AgentBoard.importing()) toastOnce('__NAME__ קורא את קבוצת הוואטסאפ… (עד כמה דקות)');
+    var nav = '<button class="chip' + (view === 'main' ? ' on' : '') + '" onclick="go(\'main\')">סידור עבודה</button>';
+    nav += '<button class="chip' + (view === 'tasks' ? ' on' : '') + '" onclick="go(\'tasks\')">כל המשימות</button>';
+    if (hasReports) nav += '<button class="chip' + (view === 'reports' ? ' on' : '') + '" onclick="go(\'reports\')">סיכומים יומיים</button>';
+    b.employees.forEach(function (e) {
+      var open = b.tasks.filter(function (t) { return t.assignee === e.name && todaysTasks(t) && !isDone(t); }).length;
+      nav += '<button class="chip' + (view === 'emp:' + e.name ? ' on' : '') + '" onclick="go(\'emp:\' + ' + attr(JSON.stringify(e.name)) + ')">' + esc(e.name) + (open ? ' · ' + open : '') + '</button>';
+    });
+    document.getElementById('nav').innerHTML = nav;
+    var m = document.getElementById('main');
+    if (view === 'main') m.innerHTML = mainView();
+    else if (view === 'tasks') m.innerHTML = tasksView();
+    else if (view === 'reports') m.innerHTML = reportsView();
+    else m.innerHTML = employeeView(emp(view.slice(4)));
+    bindChecks();
+  }
+
+  function bindChecks() {
+    Array.prototype.forEach.call(document.querySelectorAll('input[data-tick]'), function (cb) {
+      cb.disabled = !inApp;
+      cb.addEventListener('change', function () { var id = cb.getAttribute('data-tick'); call(function () { return AgentBoard.setDone(id, cb.checked); }); });
+    });
+  }
+
+  function taskRow(t, opts) {
+    opts = opts || {};
+    var done = isDone(t);
+    var h = '<div class="task' + (done ? ' done' : '') + '"><input type="checkbox" data-tick="' + attr(t.id) + '"' + (done ? ' checked' : '') + '><div>';
+    h += '<div class="t" style="cursor:pointer" onclick="openReport(' + attr(JSON.stringify(t.id)) + ')">' + esc(t.title) +
+      ' <span class="tag" style="color:var(--accent);border-color:var(--accent)">דוח</span></div><div class="tags">';
+    if (t.kind !== 'once') h += '<span class="tag ' + t.kind + '">' + KIND[t.kind] + '</span>';
+    if (t.kind === 'once' && t.date) h += '<span class="tag">' + esc(t.date) + '</span>';
+    if (isLate(t)) h += '<span class="tag late">באיחור</span>';
+    if (opts.who && t.assignee) h += '<span class="tag">' + esc(t.assignee) + '</span>';
+    if (t.location) h += '<span class="tag loc">' + esc(t.location) + '</span>';
+    if (t.recommended && t.recommended !== t.assignee) h += '<span class="tag rec">' + (t.assignee ? 'מתאים יותר: ' : 'מומלץ: ') + esc(t.recommended) + '</span>';
+    if (t.kind !== 'once' && (t.doneOn || []).length) h += '<span class="tag">בוצעה ' + t.doneOn.length + ' פעמים</span>';
+    if (t.startedAt) h += '<span class="tag daily">▶ ' + esc(t.startedAt) + '</span>';
+    if (t.endedAt) h += '<span class="tag" style="color:var(--ok)">⏹ ' + esc(t.endedAt) + '</span>';
+    if (t.formName) h += '<span class="tag">' + esc(t.formName) + '</span>';
+    h += '</div>';
+    // What the employee sent from their link: changes, forms received and filled.
+    (t.log || []).slice(-3).forEach(function (line) { h += '<div class="why">' + esc(line) + '</div>'; });
+    if (t.reason && t.recommended && t.recommended !== t.assignee) h += '<div class="why">' + esc(t.reason) + '</div>';
+    if (t.details) h += '<div class="details">' + esc(t.details) + '</div>';
+    h += '</div><div>';
+    if (inApp) h += '<button class="btn ghost sm" onclick="openTask(' + attr(JSON.stringify(t.id)) + ')">✎</button>';
+    return h + '</div></div>';
+  }
+
+  function scheduleTable(list) {
+    var dates = weekDates(), t = today();
+    var h = '<div class="scroll"><table class="sched"><tr><th></th>';
+    dates.forEach(function (d, i) { h += '<th class="' + (key(d) === t ? 'today' : '') + '">' + DAY_NAMES[i] + '<br>' + d.getDate() + '/' + (d.getMonth() + 1) + '</th>'; });
+    h += '</tr>';
+    list.forEach(function (e) {
+      h += '<tr><td class="name" onclick="go(\'emp:\' + ' + attr(JSON.stringify(e.name)) + ')">' + esc(e.name) + '</td>';
+      DAYS.forEach(function (d, i) {
+        var v = (e.schedule || {})[d] || '';
+        var off = /חופש|לא עובד|^-$/.test(v);
+        var cls = (key(dates[i]) === t ? 'today ' : '') + (off ? 'off' : v ? 'work' : 'off');
+        h += '<td class="' + cls + '">' + (v ? esc(v) : '—') + '</td>';
+      });
+      h += '</tr>';
+    });
+    return h + '</table></div>';
+  }
+
+  function mainView() {
+    var b = B();
+    if (!b.employees.length && !b.tasks.length) {
+      return '<div class="panel empty"><p style="font-size:1.1rem;color:var(--text)">עוד אין עובדים בצוות.</p>' +
+        '<p>הוסף עובד עם הכפתור <b>+ עובד</b>, או אמור ל__NAME__: "תוסיף עובד דני, חשמלאי מחיפה, עובד ראשון עד חמישי משבע עד ארבע".</p>' +
+        '<p>אפשר גם לייבא קבוצת עבודה מוואטסאפ: בוואטסאפ פותחים את הקבוצה › לוחצים על שם הקבוצה › ייצוא צ\'אט › ללא מדיה › שמירה לקבצים. אחר כך כאן: <b>⬆ ייבוא מוואטסאפ</b>.</p>' +
+        (inApp ? '<button class="btn g" onclick="openEmployee()">+ הוסף עובד ראשון</button>' : '') + '</div>';
+    }
+    var todays = b.tasks.filter(todaysTasks);
+    var dayKey = DAYS[new Date().getDay()];
+    var working = b.employees.filter(function (e) { var v = (e.schedule || {})[dayKey] || ''; return v && !/חופש|לא עובד/.test(v); }).length;
+    var h = '<div class="kpis">';
+    h += '<div class="kpi"><b style="color:var(--accent)">' + b.employees.length + '</b><span>עובדים</span></div>';
+    h += '<div class="kpi"><b style="color:var(--ok)">' + working + '</b><span>עובדים היום</span></div>';
+    h += '<div class="kpi"><b style="color:var(--warn)">' + todays.filter(function (t) { return !isDone(t); }).length + '</b><span>פתוחות היום</span></div>';
+    h += '<div class="kpi"><b style="color:var(--accent)">' + todays.filter(isDone).length + '</b><span>בוצעו היום</span></div>';
+    h += '</div><div class="grid2"><div>';
+    h += '<section class="panel"><h2>סידור עבודה השבוע <small>לחץ על שם לכרטיס העובד</small></h2>' + scheduleTable(b.employees) + '</section>';
+    h += '</div><div><section class="panel"><h2>משימות היום <small>לפי עובד</small></h2>';
+    var any = false;
+    var orphan = todays.filter(function (t) { return !t.assignee || !emp(t.assignee); });
+    if (orphan.length) { any = true; h += '<div class="who" style="color:var(--warn)">ללא אחראי</div>'; orphan.forEach(function (t) { h += taskRow(t); }); }
+    b.employees.forEach(function (e) {
+      var mine = todays.filter(function (t) { return t.assignee === e.name; });
+      if (!mine.length) return;
+      any = true;
+      var d = mine.filter(isDone).length;
+      h += '<div class="who" onclick="go(\'emp:\' + ' + attr(JSON.stringify(e.name)) + ')">' + esc(e.name) + ' <span class="muted">' + d + '/' + mine.length + '</span></div>';
+      mine.forEach(function (t) { h += taskRow(t); });
+    });
+    if (!any) h += '<div class="muted">אין משימות להיום.</div>';
+    return h + '</section></div></div>';
+  }
+
+  function tasksView() {
+    var b = B();
+    var h = '<div class="row" style="margin-bottom:10px">';
+    [['open', 'פתוחות'], ['all', 'הכל'], ['done', 'בוצעו']].forEach(function (f) {
+      h += '<button class="chip' + (taskFilter === f[0] ? ' on' : '') + '" onclick="taskFilter=\'' + f[0] + '\';render()">' + f[1] + '</button>';
+    });
+    h += '</div>';
+    var list = b.tasks.filter(function (t) { return taskFilter === 'all' || (taskFilter === 'done' ? isDone(t) : !isDone(t)); });
+    [['daily', 'משימות יומיות'], ['weekly', 'משימות שבועיות'], ['once', 'משימות חד-פעמיות']].forEach(function (k) {
+      var part = list.filter(function (t) { return t.kind === k[0]; });
+      if (!part.length) return;
+      h += '<section class="panel"><h2>' + k[1] + ' <small>' + part.length + '</small></h2>';
+      part.forEach(function (t) { h += taskRow(t, { who: true }); });
+      h += '</section>';
+    });
+    if (!list.length) h += '<div class="panel empty">אין משימות בסינון הזה.</div>';
+    return h;
+  }
+
+  function employeeView(e) {
+    var b = B();
+    var mine = b.tasks.filter(function (t) { return t.assignee === e.name; });
+    var daily = mine.filter(function (t) { return t.kind === 'daily'; });
+    var weekly = mine.filter(function (t) { return t.kind === 'weekly'; });
+    var open = mine.filter(function (t) { return t.kind === 'once' && !isDone(t); });
+    var done = mine.filter(function (t) { return t.kind === 'once' && isDone(t); }).sort(function (a, c) { return (c.date || '').localeCompare(a.date || ''); });
+    var recurringDone = mine.filter(function (t) { return t.kind !== 'once' && (t.doneOn || []).length; });
+    var recommended = b.tasks.filter(function (t) { return t.recommended === e.name && t.assignee !== e.name && !isDone(t); });
+    var onceAll = mine.filter(function (t) { return t.kind === 'once'; });
+    var pct = onceAll.length ? Math.round(100 * done.length / onceAll.length) : 0;
+
+    var h = '<section class="panel"><div class="card-head"><div class="avatar">' + esc((e.name || '?').charAt(0)) + '</div><div class="info">';
+    h += '<h2>' + esc(e.name) + '</h2><div class="muted">' + esc([e.role, e.area && ('' + e.area)].filter(Boolean).join(' · ')) + '</div>';
+    if (e.phone) h += '<a class="tel" href="tel:' + attr(e.phone) + '">' + esc(e.phone) + '</a>';
+    h += '</div>';
+    if (inApp) h += '<div class="row"><button class="btn ghost sm" onclick="openEmployee(' + attr(JSON.stringify(e.name)) + ')">✎ עריכה</button><button class="btn p sm" onclick="openTask(null, ' + attr(JSON.stringify(e.name)) + ')">+ משימה</button><button class="btn g sm" onclick="AgentBoard.sendLink(' + attr(JSON.stringify(e.name)) + '); toast(\'פותח וואטסאפ…\')">שלח לו את הסידור</button></div>';
+    h += '</div>';
+    if (e.notes) h += '<div class="details">' + esc(e.notes) + '</div>';
+    if (onceAll.length) h += '<div class="progress"><i style="width:' + pct + '%"></i></div><div class="muted">' + done.length + ' מתוך ' + onceAll.length + ' משימות חד-פעמיות בוצעו (' + pct + '%)</div>';
+    h += '</section>';
+
+    h += '<div class="grid2"><div>';
+    h += '<section class="panel"><h2>סידור עבודה</h2>' + scheduleTable([e]) + '</section>';
+    h += section('משימות יומיות', daily, 'אין משימות יומיות.');
+    h += section('משימות שבועיות', weekly, 'אין משימות שבועיות.');
+    h += section('משימות פתוחות', open, 'אין משימות פתוחות.');
+    if (recommended.length) h += section('מומלץ עבורו', recommended, '');
+    h += '<section class="panel"><h2>משימות שבוצעו <small>' + (done.length + recurringDone.length) + '</small></h2>';
+    if (!done.length && !recurringDone.length) h += '<div class="muted">עוד לא סומנו משימות שבוצעו.</div>';
+    done.forEach(function (t) { h += taskRow(t); });
+    recurringDone.forEach(function (t) { var last = t.doneOn[t.doneOn.length - 1]; h += '<div class="rec-item"><span class="badge note">' + KIND[t.kind] + '</span><div>' + esc(t.title) + ' <span class="muted">— בוצעה ' + t.doneOn.length + ' פעמים, אחרונה ' + esc(last) + '</span></div></div>'; });
+    h += '</section></div><div>';
+
+    // Bonuses and upgrades
+    h += '<section class="panel"><h2>בונוסים ושדרוגים</h2>';
+    if (inApp) {
+      h += '<div class="row"><select class="f" id="recType" style="width:auto"><option value="bonus">בונוס</option><option value="upgrade">שדרוג (העלאה / קידום / הכשרה)</option><option value="note">הערה</option></select>';
+      h += '<input class="f" id="recText" placeholder="למשל: בונוס 500 ₪ על פרויקט חיפה" style="flex:1 1 200px"><button class="btn a sm" onclick="addRecord(' + attr(JSON.stringify(e.name)) + ')">הוסף</button></div>';
+    }
+    if (!(e.records || []).length) h += '<div class="muted" style="margin-top:6px">אין עדיין רשומות.</div>';
+    (e.records || []).forEach(function (r) {
+      h += '<div class="rec-item"><span class="badge ' + attr(r.type) + '">' + (REC[r.type] || r.type) + '</span><div style="flex:1">' + esc(r.text) + ' <span class="muted">' + esc(r.date) + '</span></div>';
+      if (inApp) h += '<button class="btn ghost sm" onclick="delRecord(' + attr(JSON.stringify(e.name)) + ',' + attr(JSON.stringify(r.id)) + ')">✕</button>';
+      h += '</div>';
+    });
+    h += '</section>';
+
+    // Review
+    var busy = inApp && AgentBoard.reviewing && AgentBoard.reviewing(e.name);
+    h += '<section class="panel review"><h2>חוות דעת <small>' + (e.review ? 'עודכנה ' + esc(e.review.date) : '') + '</small></h2>';
+    if (busy) h += '<div class="muted">__NAME__ מכין חוות דעת… (בערך חצי דקה)</div>';
+    else if (e.review) {
+      h += '<p>' + esc(e.review.summary) + '</p>';
+      if (e.review.strengths.length) h += '<h3>חוזקות</h3><ul>' + e.review.strengths.map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul>';
+      if (e.review.improvements.length) h += '<h3>לשיפור</h3><ul>' + e.review.improvements.map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul>';
+      if (e.review.recommendation) h += '<div class="reco">' + esc(e.review.recommendation) + '</div>';
+    } else h += '<div class="muted">עוד אין חוות דעת. __NAME__ ינתח את המשימות, הביצוע וההיסטוריה של העובד.</div>';
+    if (inApp && !busy) h += '<div class="actions"><button class="btn p" onclick="review(' + attr(JSON.stringify(e.name)) + ')">' + (e.review ? 'עדכן חוות דעת' : 'הכן חוות דעת') + '</button></div>';
+    h += '</section></div></div>';
+    return h;
+  }
+
+  function section(title, list, empty) {
+    var h = '<section class="panel"><h2>' + title + ' <small>' + list.length + '</small></h2>';
+    if (!list.length) h += '<div class="muted">' + empty + '</div>';
+    list.forEach(function (t) { h += taskRow(t); });
+    return h + '</section>';
+  }
+
+  // ---- Actions ----
+  function addRecord(name) {
+    var text = document.getElementById('recText').value.trim();
+    var type = document.getElementById('recType').value;
+    if (!text) { toast('כתוב מה הבונוס או השדרוג'); return; }
+    call(function () { return AgentBoard.addRecord(name, type, text); });
+    toast('נשמר');
+  }
+  function delRecord(name, id) { if (confirm('למחוק את הרשומה?')) call(function () { return AgentBoard.deleteRecord(name, id); }); }
+  function review(name) { if (!inApp) return; AgentBoard.requestReview(name); setTimeout(render, 300); toast('__NAME__ מכין חוות דעת…'); }
+  function exportExcel() { if (!inApp) return; AgentBoard.exportExcel(); }
+
+  function openModal(html) { document.getElementById('sheet').innerHTML = html; document.getElementById('modal').classList.add('on'); }
+  function closeModal() { document.getElementById('modal').classList.remove('on'); }
+
+  function openEmployee(name) {
+    if (!inApp) return;
+    var e = name ? emp(name) : { name: '', role: '', area: '', phone: '', notes: '', schedule: {} };
+    var h = '<h2>' + (name ? 'עריכת עובד' : 'עובד חדש') + '</h2>';
+    h += '<label>שם</label><input class="f" id="eName" value="' + attr(e.name) + '">';
+    h += '<label>תפקיד / תחום</label><input class="f" id="eRole" value="' + attr(e.role) + '" placeholder="חשמלאי, מנהל עבודה…">';
+    h += '<label>אזור / עיר מגורים</label><input class="f" id="eArea" value="' + attr(e.area) + '" placeholder="חיפה">';
+    h += '<label>טלפון</label><input class="f" id="ePhone" type="tel" value="' + attr(e.phone) + '">';
+    h += '<label>סידור עבודה (למשל 07:00-16:00, או "חופש")</label><div class="days">';
+    DAYS.forEach(function (d, i) { h += '<div><label style="margin:0">' + DAY_NAMES[i] + '</label><input class="f" id="d_' + d + '" value="' + attr((e.schedule || {})[d] || '') + '"></div>'; });
+    h += '</div><div class="row" style="margin-top:6px"><button class="btn ghost sm" onclick="copySunday()">העתק את ראשון לראשון–חמישי</button></div>';
+    h += '<label>הערות (מומחיות, רכב, הסמכות, דברים חשובים)</label><textarea class="f" id="eNotes">' + esc(e.notes) + '</textarea>';
+    h += '<div class="actions"><button class="btn g" onclick="saveEmployee(' + attr(JSON.stringify(name || '')) + ')">שמור</button><button class="btn ghost" onclick="closeModal()">ביטול</button>';
+    if (name) h += '<button class="btn danger" onclick="deleteEmployee(' + attr(JSON.stringify(name)) + ')">מחק עובד</button>';
+    openModal(h + '</div>');
+  }
+  function copySunday() { var v = document.getElementById('d_sun').value; ['mon', 'tue', 'wed', 'thu'].forEach(function (d) { document.getElementById('d_' + d).value = v; }); }
+  function saveEmployee(original) {
+    var name = val('eName');
+    if (!name) { need('eName', 'חסר שם'); return; }
+    var sched = {}; DAYS.forEach(function (d) { sched[d] = document.getElementById('d_' + d).value.trim(); });
+    var e = { name: name, role: val('eRole'), area: val('eArea'), phone: val('ePhone'), notes: val('eNotes'), schedule: sched };
+    closeModal();
+    call(function () { return AgentBoard.saveEmployee(JSON.stringify(e), original); });
+    view = 'emp:' + name; render(); toast('נשמר');
+  }
+  function deleteEmployee(name) { if (!confirm('למחוק את ' + name + '? המשימות שלו יישארו בלי אחראי.')) return; closeModal(); view = 'main'; call(function () { return AgentBoard.deleteEmployee(name); }); }
+  function val(id) { var e = document.getElementById(id); return e && e.value ? String(e.value).trim() : ''; }
+  /** A required field that's empty: show it right there, not only in a message. */
+  function need(id, msg) {
+    var e = document.getElementById(id);
+    if (e) { e.style.borderColor = 'var(--bad)'; e.scrollIntoView({ block: 'center' }); e.focus(); e.placeholder = msg; }
+    toast(msg);
+  }
+
+  /** "+ משימה": first ask who it's for — one employee or the whole team. */
+  function openTask(id, forName) {
+    if (!inApp) return;
+    if (!id && forName === undefined) {
+      var h = '<h2>משימה חדשה — למי?</h2><div class="choice">';
+      h += '<button class="pick" onclick="pickWho()"><span class="big"></span><b>לעובד מסוים</b><small>תבחר עובד אחד</small></button>';
+      h += '<button class="pick all" onclick="taskForm(null, \'*\')"><span class="big"></span><b>לכל הצוות</b><small>כל עובד יקבל אותה ויסמן בעצמו</small></button>';
+      h += '</div><div class="actions"><button class="btn ghost" onclick="closeModal()">ביטול</button></div>';
+      openModal(h);
+      return;
+    }
+    taskForm(id, forName);
+  }
+  function pickWho() {
+    var b = B();
+    if (!b.employees.length) { taskForm(null, ''); return; }
+    var h = '<h2>לאיזה עובד?</h2><div class="who-grid">';
+    b.employees.forEach(function (e, i) {
+      h += '<button class="pick" style="animation-delay:' + (i * 0.04) + 's" onclick="taskForm(null, ' + attr(JSON.stringify(e.name)) + ')"><span class="avatar sm">' + esc(e.name.charAt(0)) + '</span><b>' + esc(e.name) + '</b><small>' + esc([e.role, e.area].filter(Boolean).join(' · ')) + '</small></button>';
+    });
+    h += '</div><div class="actions"><button class="btn ghost" onclick="openTask()">חזרה</button></div>';
+    openModal(h);
+  }
+  function taskForm(id, forName) {
+    var b = B();
+    var t = id ? b.tasks.filter(function (x) { return x.id === id; })[0] : { id: '', kind: 'once', date: today(), title: '', location: '', assignee: forName || '', details: '' };
+    if (!t) return;
+    var h = '<h2>' + (id ? 'עריכת משימה' : 'משימה חדשה') + '</h2>';
+    h += '<label>מה צריך לעשות</label><input class="f" id="tTitle" value="' + attr(t.title) + '">';
+    h += '<label>סוג</label><select class="f" id="tKind" onchange="document.getElementById(\'dateBox\').style.display = this.value === \'once\' ? \'\' : \'none\'">';
+    ['once', 'daily', 'weekly'].forEach(function (k) { h += '<option value="' + k + '"' + (t.kind === k ? ' selected' : '') + '>' + KIND[k] + '</option>'; });
+    h += '</select><div id="dateBox"' + (t.kind === 'once' ? '' : ' style="display:none"') + '><label>תאריך</label><input class="f" id="tDate" type="date" value="' + attr(t.date) + '"></div>';
+    h += '<label>מיקום</label><input class="f" id="tLoc" value="' + attr(t.location) + '" oninput="suggest()">';
+    h += '<label>אחראי</label><select class="f" id="tWho"><option value="">ללא</option>';
+    if (!id) h += '<option value="*"' + (t.assignee === '*' ? ' selected' : '') + '>כל הצוות (' + b.employees.length + ' עובדים)</option>';
+    b.employees.forEach(function (e) { h += '<option value="' + attr(e.name) + '"' + (t.assignee === e.name ? ' selected' : '') + '>' + esc(e.name) + (e.area ? ' (' + esc(e.area) + ')' : '') + '</option>'; });
+    h += '</select><div class="why" id="hint"></div>';
+    h += '<label>פרטים</label><textarea class="f" id="tDetails">' + esc(t.details) + '</textarea>';
+    // Which form the employee's upload is filled into.
+    var P = portalInfo();
+    if ((P.forms || []).length) {
+      h += '<label>טופס למילוי כשהעובד מעלה</label><select class="f" id="tForm"><option value="">ברירת מחדל' + (P.defaultForm ? ' (' + esc(P.defaultForm) + ')' : ' (לא נבחר)') + '</option>';
+      P.forms.forEach(function (f) { h += '<option value="' + attr(f) + '"' + (t.formName === f ? ' selected' : '') + '>' + esc(f) + '</option>'; });
+      h += '</select>';
+    }
+    h += '<div class="actions"><button class="btn g" onclick="saveTask(' + attr(JSON.stringify(t.id)) + ')">שמור</button><button class="btn ghost" onclick="closeModal()">ביטול</button>';
+    if (id) h += '<button class="btn danger" onclick="deleteTask(' + attr(JSON.stringify(t.id)) + ')">מחק משימה</button>';
+    openModal(h + '</div>');
+    suggest();
+  }
+  /** Who lives in the task's area: a quick local hint (the assistant gives a full recommendation by voice). */
+  function suggest() {
+    var loc = (document.getElementById('tLoc') || {}).value || '';
+    var hint = document.getElementById('hint'); if (!hint) return;
+    var near = B().employees.filter(function (e) { return e.area && loc && (loc.indexOf(e.area) >= 0 || e.area.indexOf(loc) >= 0); });
+    hint.textContent = near.length ? 'באזור: ' + near.map(function (e) { return e.name; }).join(', ') : '';
+  }
+  function saveTask(id) {
+    var title = val('tTitle');
+    if (!title) { need('tTitle', 'כתוב מה צריך לעשות'); return; }
+    var t = { id: id || '', title: title, kind: val('tKind') || 'once', date: val('tDate'), location: val('tLoc'), assignee: val('tWho'), details: val('tDetails'), formName: val('tForm') };
+    var before = B().tasks.length;
+    closeModal();
+    call(function () { return AgentBoard.saveTask(JSON.stringify(t)); });
+    if (!id && B().tasks.length === before) { toast('השמירה לא הצליחה — נסה שוב'); return; }
+    toast(t.assignee === '*' ? 'נשלח לכל הצוות ' : 'נשמר ✓');
+  }
+  function deleteTask(id) { if (!confirm('למחוק את המשימה?')) return; closeModal(); call(function () { return AgentBoard.deleteTask(id); }); }
+
+  // ---- Task report: everything about one task ----
+  /** Links to the filled form / Drive files / map in a log line become buttons. */
+  function linkify(s) {
+    return esc(s).replace(/(https:\/\/(?:drive|docs|maps)\.google\.com\/[^\s<]+|content:\/\/[^\s<]+)/g, function (u) {
+      var raw = u.replace(/&amp;/g, '&');
+      var label = raw.indexOf('maps.google') >= 0 ? 'מפה' : 'פתח';
+      return '<button class="btn ghost sm" onclick="AgentBoard.openLink(' + attr(JSON.stringify(raw)) + ')">' + label + '</button>';
+    });
+  }
+  function openReport(id) {
+    var t = B().tasks.filter(function (x) { return x.id === id; })[0];
+    if (!t) return;
+    var done = isDone(t);
+    var h = '<h2>דוח משימה</h2><div class="t" style="font-size:1.1rem">' + esc(t.title) + '</div>';
+    h += '<div class="tags">';
+    h += '<span class="tag ' + (done ? '' : 'late') + '" style="' + (done ? 'color:var(--ok);border-color:var(--ok)' : '') + '">' + (done ? '✔ בוצעה' : t.startedAt ? 'בביצוע' : '○ עוד לא התחילה') + '</span>';
+    if (t.assignee) h += '<span class="tag">' + esc(t.assignee) + '</span>';
+    if (t.kind !== 'once') h += '<span class="tag ' + t.kind + '">' + KIND[t.kind] + '</span>'; else if (t.date) h += '<span class="tag">' + esc(t.date) + '</span>';
+    if (t.location) h += '<span class="tag loc">' + esc(t.location) + '</span>';
+    h += '</div>';
+    h += '<div class="panel" style="margin-top:10px"><div class="row" style="justify-content:space-between"><span>▶ התחלה</span><b>' + esc(t.startedAt || '—') + '</b></div>';
+    h += '<div class="row" style="justify-content:space-between;margin-top:6px"><span>⏹ סיום</span><b>' + esc(t.endedAt || '—') + '</b></div></div>';
+    if (t.details) h += '<label>פרטים ושינויים</label><div class="details">' + esc(t.details) + '</div>';
+    if ((t.log || []).length) {
+      h += '<label>מה התקבל על המשימה</label>';
+      h += '<div class="panel">' + t.log.slice().reverse().map(function (l) { return '<div class="rec-item"><div style="flex:1">' + linkify(l) + '</div></div>'; }).join('') + '</div>';
+    }
+    h += '<div class="actions">';
+    if (window.AgentBoard && AgentBoard.refreshNow) h += '<button class="btn p sm" onclick="AgentBoard.refreshNow(); toast(\'בודק…\')">בדוק עדכונים עכשיו</button>';
+    h += '<button class="btn ghost sm" onclick="taskForm(' + attr(JSON.stringify(t.id)) + ')">✎ עריכה</button><button class="btn ghost" onclick="closeModal()">סגור</button></div>';
+    openModal(h);
+    openReportId = id;
+  }
+  var openReportId = null;
+  // When updates arrive while a report is open, redraw it.
+  var _reload = window.reloadBoard;
+  window.reloadBoard = function () {
+    _reload();
+    if (openReportId && document.getElementById('modal').classList.contains('on') && document.querySelector('#sheet h2') && document.querySelector('#sheet h2').textContent.indexOf('דוח משימה') >= 0) openReport(openReportId);
+  };
+
+  // ---- Daily reports ----
+  function reportsView() {
+    var R = { reports: {}, working: false, hour: 19 };
+    try { R = JSON.parse(AgentBoard.reports()); } catch (e) {}
+    var h = '<section class="panel"><h2>סיכום יומי לכל עובד <small>נוצר אוטומטית כל ערב</small></h2>';
+    h += '<div class="row"><span class="muted">שעת הסיכום:</span><select class="f" style="width:auto" onchange="AgentBoard.setReportHour(parseInt(this.value)); toast(\'נשמר\')">';
+    for (var hr = 14; hr <= 23; hr++) h += '<option value="' + hr + '"' + (R.hour === hr ? ' selected' : '') + '>' + hr + ':00</option>';
+    h += '</select>';
+    h += R.working ? '<span class="muted">__NAME__ כותב את הסיכום… (כחצי דקה)</span>' : '<button class="btn p sm" onclick="AgentBoard.makeReport(); setTimeout(render, 400); toast(\'מכין סיכום…\')">הפק סיכום להיום עכשיו</button>';
+    h += '</div></section>';
+    var dates = Object.keys(R.reports || {}).sort().reverse();
+    if (!dates.length) h += '<div class="panel empty">עוד אין סיכומים. הסיכום הראשון ייווצר הערב, או לחץ "הפק סיכום להיום עכשיו".</div>';
+    dates.forEach(function (d, di) {
+      var r = R.reports[d];
+      h += '<section class="panel"><h2>' + esc(d.split('-').reverse().join('/')) + (r.pdf ? ' <button class="btn ghost sm" onclick="AgentBoard.openLink(' + attr(JSON.stringify(r.pdf)) + ')">PDF</button>' : '') + '</h2>';
+      h += '<div class="details" style="margin-bottom:8px">' + esc(r.team_summary) + '</div>';
+      (r.employees || []).forEach(function (e) {
+        var stars = '★★★★★'.slice(0, Math.max(0, Math.min(5, e.score || 0))) + '<span style="opacity:.25">' + '★★★★★'.slice(0, 5 - Math.max(0, Math.min(5, e.score || 0))) + '</span>';
+        h += '<div class="rec-item" style="display:block;padding:10px 0"><div class="row" style="justify-content:space-between"><b>' + esc(e.name) + '</b><span style="color:var(--warn)">' + stars + '</span></div>';
+        if (e.hours) h += '<div class="tags"><span class="tag daily">⏱ ' + esc(e.hours) + '</span></div>';
+        h += '<div style="margin-top:4px">' + esc(e.done) + '</div>';
+        h += '<div class="why" style="font-size:.85rem;color:var(--text)">' + esc(e.review) + '</div>';
+        if ((e.improvements || []).length) h += '<ul style="margin:4px 0;padding-inline-start:18px">' + e.improvements.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>';
+        if (e.suggestions) h += '<div class="reco">' + esc(e.suggestions) + '</div>';
+        h += '</div>';
+      });
+      h += '</section>';
+      if (di > 13) return;
+    });
+    return h;
+  }
+
+  // ---- Employees' portal: personal links, default form ----
+  function portalInfo() {
+    if (!inApp || !AgentBoard.portal) return { forms: [], links: {} };
+    try { return JSON.parse(AgentBoard.portal()); } catch (e) { return { forms: [], links: {} }; }
+  }
+  function openPortal() {
+    if (!inApp) return;
+    if (!AgentBoard.setPortal) { openSendSchedule(); return; }
+    var P = portalInfo(), b = B();
+    var h = '<h2>סידור עבודה וקישורים לעובדים</h2>';
+    h += '<p class="muted">כל עובד מקבל קישור אישי: הסידור והמשימות שלו, כפתורי "התחלתי" ו"סיימתי", העלאת טופס ושינויים בהזמנה. מה שהוא שולח מגיע ל__NAME__, שממלא את הטופס ומעדכן את המשימה וההזמנה.</p>';
+    h += '<label>כתובת הפורטל (Google Apps Script, מסתיימת ב-exec/)</label><input class="f" id="pUrl" dir="ltr" placeholder="https://script.google.com/macros/s/…/exec" value="' + attr(P.url || '') + '">';
+    h += '<label>שם העסק (מופיע לעובדים)</label><input class="f" id="pCompany" value="' + attr(P.company || '') + '">';
+    h += '<div class="actions"><button class="btn g sm" onclick="savePortal()">שמור</button>';
+    if (P.url) h += '<button class="btn ghost sm" onclick="AgentBoard.publishNow()">עדכן את הסידור עכשיו</button><button class="btn ghost sm" onclick="AgentBoard.refreshNow()">בדוק מה העובדים שלחו</button>';
+    h += '</div>';
+    if (P.status) h += '<div class="why">' + esc(P.status) + '</div>';
+    h += '<label>טופס ברירת מחדל למילוי (כשלמשימה אין טופס משלה)</label><select class="f" id="pForm" onchange="AgentBoard.setDefaultForm(this.value); toast(\'נשמר\')"><option value="">— בלי טופס: רק לשמור את מה שהעובד העלה —</option>';
+    (P.forms || []).forEach(function (f) { h += '<option value="' + attr(f) + '"' + (P.defaultForm === f ? ' selected' : '') + '>' + esc(f) + '</option>'; });
+    h += '</select>';
+    if (!(P.forms || []).length) h += '<div class="why">אין עדיין טפסים שמורים — בחר טופס פעם אחת במסך "מילוי טופס" והוא יופיע כאן.</div>';
+    if (P.adminLink) {
+      h += '<h2 style="margin-top:16px">מרכז ניהול במחשב</h2>';
+      h += '<p class="muted">הצוות וההזמנות על מסך המחשב, מסונכרנים עם הטלפון. הקישור פרטי לך בלבד — אל תעביר אותו לאחרים.</p>';
+      h += '<div class="actions"><button class="btn p sm" onclick="AgentBoard.shareAdmin()">שלח לעצמי את הקישור</button>';
+      h += '<button class="btn danger sm" onclick="if (confirm(\'ליצור קישור חדש? הקישור הישן יפסיק לעבוד.\')) { AgentBoard.resetAdmin(); toast(\'נוצר קישור חדש\'); setTimeout(openPortal, 500); }">קישור חדש</button></div>';
+    }
+    h += '<h2 style="margin-top:16px">שליחה לעובדים</h2>';
+    if (!P.url) h += '<div class="why">אחרי שתדביק את כתובת הפורטל, יופיעו כאן כפתורי שליחה. עד אז אפשר לשלוח את קישור המייל.</div>';
+    b.employees.forEach(function (e) {
+      var L = (P.links || {})[e.name] || {};
+      h += '<div class="rec-item" style="align-items:center"><div style="flex:1"><b>' + esc(e.name) + '</b><div class="why">' + (L.phone ? esc(L.phone) : 'אין טלפון — אפשר לשתף') + '</div></div>';
+      h += '<button class="btn g sm" onclick="AgentBoard.sendLink(' + attr(JSON.stringify(e.name)) + ')">שלח</button>';
+      h += '<button class="btn ghost sm" onclick="AgentBoard.shareLink(' + attr(JSON.stringify(e.name)) + ')">↗ שתף</button></div>';
+    });
+    if (!b.employees.length) h += '<div class="muted">עוד אין עובדים.</div>';
+    h += '<div class="actions"><button class="btn ghost" onclick="closeModal()">סגור</button></div>';
+    openModal(h);
+  }
+  /** Without the employees' portal: each employee gets their week and open tasks on WhatsApp. */
+  function openSendSchedule() {
+    var b = B();
+    var h = '<h2>שליחת הסידור לעובדים</h2>';
+    h += '<p class="muted">כל עובד מקבל בוואטסאפ את הסידור שלו לשבוע ואת המשימות הפתוחות שלו. וואטסאפ נפתח עם ההודעה מוכנה, ונשאר רק ללחוץ "שלח".</p>';
+    b.employees.forEach(function (e) {
+      h += '<div class="rec-item" style="align-items:center"><div style="flex:1"><b>' + esc(e.name) + '</b><div class="why">' + (e.phone ? esc(e.phone) : 'אין טלפון — אפשר לשתף') + '</div></div>';
+      if (e.phone) h += '<button class="btn g sm" onclick="AgentBoard.sendLink(' + attr(JSON.stringify(e.name)) + ')">וואטסאפ</button>';
+      h += '<button class="btn ghost sm" onclick="AgentBoard.shareLink(' + attr(JSON.stringify(e.name)) + ')">↗ שתף</button></div>';
+    });
+    if (!b.employees.length) h += '<div class="muted">עוד אין עובדים.</div>';
+    h += '<div class="actions"><button class="btn ghost" onclick="closeModal()">סגור</button></div>';
+    openModal(h);
+  }
+  function savePortal() {
+    var ok = AgentBoard.setPortal(val('pUrl'), val('pCompany'));
+    toast(ok ? 'נשמר — מעדכן את הסידור לעובדים' : 'הכתובת צריכה להתחיל ב-https://script.google.com ולהסתיים ב-/exec');
+    if (ok) setTimeout(openPortal, 400);
+  }
+
+  render();
+</script>
+</body>
+</html>

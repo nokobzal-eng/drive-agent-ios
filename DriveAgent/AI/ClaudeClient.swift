@@ -46,6 +46,73 @@ final class ClaudeClient {
         }
     }
 
+    /// One request whose answer must match `schema` (structured outputs): returns the parsed JSON.
+    /// For background work like a review or an import, not the live conversation.
+    func structured(
+        settings: AppSettings,
+        system: String,
+        text: String,
+        schema: JSON,
+        maxTokens: Int = 16000
+    ) async throws -> JSON {
+        guard !settings.apiKey.isEmpty else { throw ClaudeError.noKey }
+        var output: JSON = ["format": ["type": "json_schema", "schema": schema] as JSON]
+        if Self.isCurrentGeneration(settings.model) { output["effort"] = "medium" }
+        let body: JSON = [
+            "model": settings.model,
+            "max_tokens": maxTokens,
+            "system": system,
+            "messages": [["role": "user", "content": text] as JSON],
+            "output_config": output,
+        ]
+        var request = URLRequest(url: Self.endpoint, timeoutInterval: 300)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "content-type")
+        request.setValue(settings.apiKey, forHTTPHeaderField: "x-api-key")
+        request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await URLSession.shared.data(for: request)
+        } catch {
+            throw ClaudeError.network
+        }
+        guard let http = response as? HTTPURLResponse else { throw ClaudeError.badResponse }
+        guard (200...299).contains(http.statusCode) else {
+            log.warning("Structured HTTP \(http.statusCode)")
+            throw ClaudeError.http(http.statusCode)
+        }
+        guard let root = try? JSONSerialization.jsonObject(with: data) as? JSON,
+              root["stop_reason"] as? String != "refusal",
+              let blocks = root["content"] as? [JSON],
+              let answer = blocks.first(where: { $0["type"] as? String == "text" })?["text"] as? String,
+              let answerData = answer.data(using: .utf8),
+              let result = try? JSONSerialization.jsonObject(with: answerData) as? JSON else {
+            throw ClaudeError.badResponse
+        }
+        return result
+    }
+
+    /// A real check against the service: true if the key works, false if it is refused,
+    /// nil if there is no connection. Costs nothing: it only lists models.
+    static func checkConnection(apiKey: String) async -> Bool? {
+        guard !apiKey.isEmpty else { return false }
+        var request = URLRequest(url: URL(string: "https://api.anthropic.com/v1/models?limit=1")!, timeoutInterval: 15)
+        request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
+        request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
+        do {
+            let (_, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse else { return nil }
+            if (200...299).contains(http.statusCode) { return true }
+            log.warning("Check HTTP \(http.statusCode)")
+            return http.statusCode >= 500 ? nil : false
+        } catch {
+            return nil
+        }
+    }
+
     private enum Outcome {
         case success(JSON)
         case failure(Int)

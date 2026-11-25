@@ -16,6 +16,7 @@ struct DriveAgentApp: App {
             HomeView()
                 .environmentObject(controller)
                 .environment(\.layoutDirection, .rightToLeft)
+                .preferredColorScheme(.dark)
         }
     }
 }
