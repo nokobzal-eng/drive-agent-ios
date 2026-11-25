@@ -18,6 +18,8 @@ final class DriveController: ObservableObject, AgentHost {
     @Published private(set) var heard = ""
     @Published private(set) var answer = ""
     @Published private(set) var errorText: String?
+    /// Everything the microphone is recognizing right now, wake word or not.
+    @Published private(set) var live = ""
 
     private let speaker = Speaker()
     private let speech = SpeechInput()
@@ -26,8 +28,10 @@ final class DriveController: ObservableObject, AgentHost {
     private lazy var brain = AgentBrain(claude: claude, host: self)
     private var loopTask: Task<Void, Never>?
     private var stopRequested = false
+    private var talkRequested = false
 
     init() {
+        speech.onPartial = { [weak self] text in self?.live = text }
         let center = NotificationCenter.default
         center.addObserver(forName: .AVAudioEngineConfigurationChange, object: speech.engine, queue: .main) { [weak self] _ in
             Task { @MainActor [weak self] in self?.recoverAudio() }
@@ -42,6 +46,13 @@ final class DriveController: ObservableObject, AgentHost {
     func start() {
         guard !isDriving else { return }
         loopTask = Task { await begin() }
+    }
+
+    /// The on-screen "דבר עכשיו" button: the next phrase is a request, no wake word needed.
+    func talkNow() {
+        guard isDriving, phase == .listening, !talkRequested else { return }
+        talkRequested = true
+        speech.cancel()
     }
 
     func stop() {
@@ -109,16 +120,28 @@ final class DriveController: ObservableObject, AgentHost {
         await say("מצב נהיגה פעיל.")
         var followUp = false
         while isDriving && !Task.isCancelled {
+            var direct = followUp
+            if talkRequested {
+                talkRequested = false
+                direct = true
+                await say("כן?")
+            }
             phase = .listening
+            live = ""
             let started = Date()
-            guard let utterance = await speech.listen(maxWait: followUp ? 6 : 25) else {
+            guard let utterance = await speech.listen(maxWait: direct ? 8 : 25) else {
                 followUp = false
+                if talkRequested { continue }
+                if let reason = speech.unavailableReason {
+                    errorText = reason
+                }
                 // No recognizer or no network returns at once: don't spin.
                 if Date().timeIntervalSince(started) < 1 { try? await Task.sleep(nanoseconds: 1_000_000_000) }
                 continue
             }
+            errorText = nil
             var request = utterance
-            if !followUp {
+            if !direct {
                 guard let afterWake = WakeWord.request(in: utterance, wake: currentSettings().assistantName) else {
                     continue
                 }

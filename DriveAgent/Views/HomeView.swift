@@ -10,6 +10,10 @@ struct HomeView: View {
                 Text(controller.phase.rawValue)
                     .font(.largeTitle.bold())
 
+                if controller.isDriving && !controller.live.isEmpty {
+                    LabeledText(title: "שומע עכשיו", text: controller.live)
+                        .foregroundStyle(.secondary)
+                }
                 if !controller.heard.isEmpty {
                     LabeledText(title: "שמעתי", text: controller.heard)
                 }
@@ -21,6 +25,19 @@ struct HomeView: View {
                 }
 
                 Spacer()
+
+                if controller.isDriving {
+                    Button {
+                        controller.talkNow()
+                    } label: {
+                        Text("דבר עכשיו")
+                            .font(.title2.bold())
+                            .frame(maxWidth: .infinity, minHeight: 88)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.blue)
+                    .disabled(controller.phase != .listening)
+                }
 
                 Button {
                     if controller.isDriving { controller.stop() } else { controller.start() }

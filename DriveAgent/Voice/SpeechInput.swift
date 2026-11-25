@@ -41,6 +41,11 @@ final class SpeechInput {
     private var timer: Task<Void, Never>?
     private var cap: Task<Void, Never>?
 
+    /// Live transcript while a phrase is being heard, for the on-screen "שומע" line.
+    var onPartial: (@MainActor (String) -> Void)?
+    /// Why the last `listen` returned at once without listening, or nil if it listened.
+    private(set) var unavailableReason: String?
+
     func startEngine() throws {
         let input = engine.inputNode
         input.removeTap(onBus: 0)
@@ -69,7 +74,19 @@ final class SpeechInput {
     /// One spoken phrase, or nil if nothing was said within `maxWait` seconds.
     func listen(maxWait: TimeInterval, silence: TimeInterval = 1.2) async -> String? {
         finish()
-        guard let recognizer, recognizer.isAvailable, engine.isRunning else { return nil }
+        guard let recognizer else {
+            unavailableReason = "האייפון לא תומך בזיהוי דיבור בעברית."
+            return nil
+        }
+        guard recognizer.isAvailable else {
+            unavailableReason = "זיהוי הדיבור לא זמין כרגע. בודקים חיבור לאינטרנט."
+            return nil
+        }
+        guard engine.isRunning else {
+            unavailableReason = "המיקרופון לא פעיל."
+            return nil
+        }
+        unavailableReason = nil
         let newRequest = SFSpeechAudioBufferRecognitionRequest()
         newRequest.shouldReportPartialResults = true
         newRequest.taskHint = .dictation
@@ -112,6 +129,7 @@ final class SpeechInput {
         guard continuation != nil else { return }
         if let text, !text.isEmpty {
             latest = text
+            onPartial?(text)
             arm(after: silence)
         }
         if isFinal || failed { finish() }

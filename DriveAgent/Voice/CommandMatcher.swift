@@ -89,9 +89,22 @@ enum WakeWord {
         let words = CommandMatcher.normalize(utterance).split(separator: " ").map(String.init)
         let target = CommandMatcher.normalize(wake).split(separator: " ").map(String.init)
         guard !target.isEmpty, words.count >= target.count else { return nil }
-        for start in 0...(words.count - target.count) where Array(words[start..<(start + target.count)]) == target {
+        for start in 0...(words.count - target.count) {
+            let window = Array(words[start..<(start + target.count)])
+            guard matches(window[0], target[0]), Array(window.dropFirst()) == Array(target.dropFirst()) else {
+                continue
+            }
             return words[(start + target.count)...].joined(separator: " ")
         }
         return nil
+    }
+
+    /// The first wake word may carry one Hebrew prefix letter, as in "ושלומי" or "השלומי".
+    private static func matches(_ word: String, _ target: String) -> Bool {
+        if word == target { return true }
+        guard word.count == target.count + 1, let first = word.first, "ושהלבמכ".contains(first) else {
+            return false
+        }
+        return String(word.dropFirst()) == target
     }
 }
