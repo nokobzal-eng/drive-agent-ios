@@ -55,7 +55,7 @@ jobs:
 
       - name: Show compile errors
         if: failure()
-        run: grep -E "error:|ld: |Undefined symbols" build.log | sort -u | head -n 60 || true
+        run: grep -E "error:|ld:|Undefined symbols" build.log | sort -u | head -n 60 || true
 
       - name: Upload build log
         if: failure()
