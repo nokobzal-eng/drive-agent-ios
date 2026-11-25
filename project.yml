@@ -1,0 +1,33 @@
+name: DriveAgent
+options:
+  bundleIdPrefix: com.driveagent
+  deploymentTarget:
+    iOS: "17.0"
+  developmentLanguage: he
+targets:
+  DriveAgent:
+    type: application
+    platform: iOS
+    sources:
+      - path: DriveAgent
+        excludes:
+          - Info.plist
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.driveagent.ios
+        INFOPLIST_FILE: DriveAgent/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        MARKETING_VERSION: "0.1"
+        CURRENT_PROJECT_VERSION: "1"
+        SWIFT_VERSION: "5.0"
+        TARGETED_DEVICE_FAMILY: "1"
+        CODE_SIGN_STYLE: Automatic
+schemes:
+  DriveAgent:
+    build:
+      targets:
+        DriveAgent: all
+    run:
+      config: Debug
+    archive:
+      config: Release
